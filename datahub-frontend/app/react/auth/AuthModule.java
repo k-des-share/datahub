@@ -81,6 +81,11 @@ public class AuthModule extends AbstractModule {
             public Result perform(final PlayWebContext context, final Config config, final HttpActionAdapter<Result, PlayWebContext> httpActionAdapter,
                                   final String inputDefaultUrl, final Boolean inputSaveInSession, final Boolean inputMultiProfile,
                                   final Boolean inputRenewSession, final String client) {
+
+                if (OidcResponseErrorHandler.isError(context)) {
+                    return new OidcResponseErrorHandler().handleError(context);
+                }
+
                 final Result result = super.perform(context, config, httpActionAdapter, inputDefaultUrl, inputSaveInSession, inputMultiProfile, inputRenewSession, client);
                 if (_oidcConfigs.getClientName().equals(client)) {
                     return handleOidcCallback(result, context, getProfileManager(context, config));
