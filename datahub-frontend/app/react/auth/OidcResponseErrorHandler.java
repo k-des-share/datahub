@@ -26,7 +26,7 @@ public class OidcResponseErrorHandler {
                 getErrorDescription(context)));
     }
 
-    public static boolean isError(final PlayWebContext context) {
+    public boolean isError(final PlayWebContext context) {
         return getError(context) != null && !getError(context).isEmpty();
     }
 
