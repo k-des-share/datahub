@@ -21,6 +21,7 @@ public class OidcConfigs {
     public static final String OIDC_USERNAME_CLAIM_REGEX_CONFIG_PATH = "auth.oidc.userNameClaimRegex";
     public static final String OIDC_SCOPE_CONFIG_PATH = "auth.oidc.scope";
     public static final String OIDC_CLIENT_NAME_CONFIG_PATH = "auth.oidc.clientName";
+    public static final String OIDC_ERROR_HANDLER_CLASS_NAME = "auth.oidc.errorHandlerClassName";
 
     /**
      * Default values
@@ -29,6 +30,7 @@ public class OidcConfigs {
     private static final String DEFAULT_OIDC_USERNAME_CLAIM_REGEX = "(.*)";
     private static final String DEFAULT_OIDC_SCOPE = "openid profile email";
     private static final String DEFAULT_OIDC_CLIENT_NAME = "oidc";
+    private static final String DEFAULT_OIDC_ERROR_HANDLER_CLASS_NAME = "react.auth.OidcResponseErrorHandler";
 
     private String _clientId;
     private String _clientSecret;
@@ -37,6 +39,7 @@ public class OidcConfigs {
     private String _userNameClaimRegex;
     private String _scope;
     private String _clientName;
+    private String _errorHandlerClassName;
 
     private Boolean _isEnabled = false;
 
@@ -70,6 +73,10 @@ public class OidcConfigs {
                     configs,
                     OIDC_CLIENT_NAME_CONFIG_PATH,
                     DEFAULT_OIDC_CLIENT_NAME);
+            _errorHandlerClassName =  getOptional(
+                    configs,
+                    OIDC_ERROR_HANDLER_CLASS_NAME,
+                    DEFAULT_OIDC_ERROR_HANDLER_CLASS_NAME);
         }
     }
 
@@ -104,6 +111,8 @@ public class OidcConfigs {
     public String getClientName() {
         return _clientName;
     }
+
+    public String GetErrorHandlerClassName() { return _errorHandlerClassName; }
 
     private String getRequired(final com.typesafe.config.Config configs, final String path) {
         if (!configs.hasPath(path)) {

@@ -20,6 +20,8 @@ import org.pac4j.play.PlayWebContext;
 import org.pac4j.play.http.PlayHttpActionAdapter;
 import org.pac4j.play.store.PlayCookieSessionStore;
 import org.pac4j.play.store.PlaySessionStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import play.Environment;
 import play.mvc.Result;
 
@@ -35,6 +37,8 @@ import static react.auth.AuthUtils.*;
  */
 public class AuthModule extends AbstractModule {
 
+    private final Logger _logger = LoggerFactory.getLogger(getClass());
+
     private static final String AUTH_BASE_URL_CONFIG_PATH = "auth.baseUrl";
     private static final String AUTH_BASE_CALLBACK_PATH_CONFIG_PATH = "auth.baseCallbackPath";
     private static final String AUTH_SUCCESS_REDIRECT_PATH_CONFIG_PATH = "auth.successRedirectPath";
@@ -45,6 +49,7 @@ public class AuthModule extends AbstractModule {
     private String _authBaseUrl;
     private String _authBaseCallbackPath;
     private String _authSuccessRedirectPath;
+    private OidcResponseErrorHandler _oidcErrorhandler;
 
     private final com.typesafe.config.Config _configs;
 
@@ -52,6 +57,7 @@ public class AuthModule extends AbstractModule {
      * OIDC-specific configurations.
      */
     private final OidcConfigs _oidcConfigs;
+
 
     public AuthModule(final Environment environment, final com.typesafe.config.Config configs) {
         _configs = configs;
@@ -68,11 +74,23 @@ public class AuthModule extends AbstractModule {
         }
     }
 
+
     @Override
     protected void configure() {
         final PlayCookieSessionStore playCacheCookieStore = new PlayCookieSessionStore();
         bind(SessionStore.class).toInstance(playCacheCookieStore);
         bind(PlaySessionStore.class).toInstance(playCacheCookieStore);
+
+
+        // Load pluggable error handler class
+        _logger.info("############### Loading Oidc error handler class: {}", _oidcConfigs.GetErrorHandlerClassName());
+        try {
+            _oidcErrorhandler = Class.forName(
+                    _oidcConfigs.GetErrorHandlerClassName())
+                    .asSubclass(OidcResponseErrorHandler.class).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
 
         final CallbackController callbackController = new CallbackController() {};
         callbackController.setDefaultUrl(_authSuccessRedirectPath);
@@ -82,8 +100,8 @@ public class AuthModule extends AbstractModule {
                                   final String inputDefaultUrl, final Boolean inputSaveInSession, final Boolean inputMultiProfile,
                                   final Boolean inputRenewSession, final String client) {
 
-                if (OidcResponseErrorHandler.isError(context)) {
-                    return new OidcResponseErrorHandler().handleError(context);
+                if (_oidcErrorhandler.isError(context)) {
+                    return _oidcErrorhandler.handleError(context);
                 }
 
                 final Result result = super.perform(context, config, httpActionAdapter, inputDefaultUrl, inputSaveInSession, inputMultiProfile, inputRenewSession, client);
